@@ -1,0 +1,7 @@
+# Python dependencies for the S2L Workshop tooling
+# Add project-specific packages below
+pyserial>=3.5
+platformio>=6.1
+sounddevice>=0.4.6
+soundfile>=0.12
+numpy>=1.24
