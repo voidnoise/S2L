@@ -18,7 +18,7 @@ setup.sh        macOS/Linux setup script
 2. Clone this repo and open the folder in VS Code.
 3. Run the setup script from a terminal in the repo root:
    - Windows (PowerShell): `.\setup.ps1`
-   - macOS/Linux: `./setup.sh`
+   - macOS/Linux: `./setup.sh` (On maxc you may need to change the file permissions with `chmod +x`)
 4. When VS Code prompts you to install the recommended extensions (Python, Pylance, PlatformIO IDE), accept. PlatformIO will finish installing its own toolchain (compilers, board platforms) automatically on first activation.
 5. VS Code will automatically select `.venv` as the Python interpreter. If it doesn't, run **Python: Select Interpreter** from the command palette and choose `.venv`.
 
