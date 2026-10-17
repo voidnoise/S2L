@@ -23,13 +23,36 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
         return 0.0
 
 class Fft():
+    '''
+    Class to handle FFT processing of audio data.
+    
+    Some examples of frequency ranges for common instruments and vocals
+    
+    Low-End:
+        Kick Drum : 60 Hz to 100 Hz
+        Bass Guitar : 41 Hz to 350 Hz
+    Low-Mid Presence : 65 Hz to 500 Hz
+        Male Volcals : 85 Hz to 500 Hz
+        Cello : 65 Hz to 880 Hz
+    Mid-Range -
+        Saxaphone : 130 Hz to 700 Hz
+        Snare Drum : 200 Hz to 400 Hz
+        Female Vocals : 165 Hz to 1 kHz
+    Upper-Mid - 
+        Acoustic Guitar : 80 Hz to 1.2 kHz 
+        Electric Guitar : 80 Hz to 5 kHz
+        Violib : 196 Hz to 3.5 kHz
+    High-Frequency - 
+        Cymbals : 300 Hz to 17 kHz
+    '''
+
 
     stats = {
             'raw_power' : 0.0,
             'fft_out'   : None,
             'fft_out_simple' : None,
             'frequencies' : None,
-            'freq_bins' : [63, 160, 400, 1000, 2500, 6250, 16000],
+            'freq_bins' : [63, 160, 400, 1000, 2500, 6250, 16000], 
             'freq_bins_max' : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             'freq_bins_max_normalized' : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             'freq_bin_indexes' : [[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]],
@@ -39,8 +62,7 @@ class Fft():
             'bin_values_normalized' : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             'dominant_freq' : 0.0,
             'saturation' : 1024,
-            'bin_max_calibration' : [2402788.39313636, 4218139.305255711, 2547538.548324541, 1369974.408750654, 525360.842142844, 161615.50320851896, 98677.28562918777] #odroic
-            # 'bin_max_calibration' : [57.166831055783405, 143.45927914460194, 108.30046088176863, 126.65308397404952, 105.80798720353737, 46.998874956479725, 20.175332649576898]
+            'bin_max_calibration' : [2402788.39313636, 4218139.305255711, 2547538.548324541, 1369974.408750654, 525360.842142844, 161615.50320851896, 98677.28562918777] 
     }
 
     def __init__(
@@ -64,7 +86,7 @@ class Fft():
         self.configured = False
 
     def configure_fft(self, data, fftsize):
-        self.run_fft(data,fftsize)
+        self.run_fft(data,fftsize,self.frate)
         self.configure_bin_parameters()
         self.configured = True
 
@@ -233,39 +255,129 @@ class Fft():
 
 if __name__ == '__main__':
 
-    # python -m core.testwav -f=sounds/DaftPunk.wav -d=True -s=2048 
+    # python fft.py --file ../audio/melody7.wav --debug true --datasize 2048
+    # python fft.py --file ../audio/melody7.wav --debug true --noplay   (process as fast as possible, no sound)
+    # python fft.py --mic true --debug true
 
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", type=str, help="file path and name of wav file.")
-    parser.add_argument("-d", "--debug", type=str, help="set true to print to terminal.")
+    parser.add_argument("-d", "--debug", type=str, help="set true to print each window to terminal.")
     parser.add_argument("-s", "--datasize", type=int, help="data size/window, default 2048.")
-    parser.add_argument("-m", "--mic", type=str, help="set true to print to use microphone input.")
+    parser.add_argument("-m", "--mic", type=str, help="set true to use microphone input.")
+    parser.add_argument("-n", "--noplay", action="store_true", help="don't play the file, just process it as fast as possible.")
     args = parser.parse_args()
 
+    def is_true(value):
+        return value is not None and value.lower() in ('true', '1', 'yes', 'y')
 
-    if args.datasize != None: data_size = args.datasize
-    else: data_size = 2048
+    data_size = args.datasize if args.datasize is not None else 2048
+    if data_size < 2 or data_size % 2:
+        parser.error("--datasize must be an even number (the fft output is split in half)")
 
-    if args.file != None: fname = args.file
-    else: fname = "../sounds/test.wav"
-    frate = 44100.0
+    debug = is_true(args.debug)
+    mic = is_true(args.mic)
+    fname = args.file if args.file is not None else "../audio/test.wav"
 
-    if args.debug != None: debug = True
-    else: debug = False
+    def process_window(fft, window):
+        """ run one window of samples through the fft and update the stats """
+        fft.run_fft(window, data_size, fft.frate)
+        fft.getDominantF()
+        fft.splitLevels()
+        fft.normalize_bin_values()
+        fft.set_freq_bins_max()
+        fft.set_freq_bins_normalized_max()
+        if debug:
+            print("dominant: %7.1f Hz | bins: %s" % (
+                fft.stats['dominant_freq'],
+                " ".join("%6.1f" % v for v in fft.stats['bin_values_normalized'])))
 
-    if args.mic != None:
-        mic=True
-    else: mic = None
+    def print_summary(fft, windows):
+        print("windows processed: %d" % windows)
+        print("bin centres (Hz):  %s" % fft.stats['freq_bins'])
+        print("max normalized:    %s" % [round(float(v), 1) for v in fft.stats['freq_bins_max_normalized']])
 
-    mic = False
+    if mic:
+        import sounddevice as sd
 
-    fft = Fft(datasize=data_size,mic=mic,debug=debug,fname=fname,frate=44100.0, output=True)
+        fft = Fft(frate=44100.0)
+        windows = 0
+        print("listening on the default input, ctrl-c to stop")
+        try:
+            with sd.InputStream(samplerate=fft.frate, channels=1, dtype='int16', blocksize=data_size) as stream:
+                while True:
+                    block, _ = stream.read(data_size)
+                    window = block[:, 0]
+                    if not fft.configured:
+                        fft.run_fft(window, data_size, fft.frate)
+                        fft.configure_bin_parameters()
+                    process_window(fft, window)
+                    windows += 1
+        except KeyboardInterrupt:
+            print()
+            print_summary(fft, windows)
+    else:
+        import soundfile as sf
 
+        if not os.path.isfile(fname):
+            parser.error("file not found: %s" % fname)
 
-    fft.run()
+        # int16 keeps the samples on the scale bin_max_calibration was measured with
+        audio, samplerate = sf.read(fname, dtype='int16', always_2d=True)
+        samples = audio.mean(axis=1)  # mix down to mono for the fft
 
-    while True:
-        pass
+        fft = Fft(frate=float(samplerate))
 
-    exit()
+        windows = 0
+        n_windows = len(samples) // data_size
+        if n_windows == 0:
+            parser.error("%s is shorter than one window (%d samples)" % (fname, data_size))
+
+        def handle(window):
+            if not fft.configured:
+                fft.run_fft(window, data_size, fft.frate)
+                fft.configure_bin_parameters()
+            process_window(fft, window)
+
+        if args.noplay:
+            for i in range(n_windows):
+                handle(samples[i * data_size:(i + 1) * data_size])
+                windows += 1
+        else:
+            import queue
+            import time
+            import sounddevice as sd
+
+            # The audio callback hands one window of samples to the sound card and
+            # queues the same window for the fft, so the values shown follow the
+            # audio clock. The fft runs here in the main thread, not in the callback.
+            q = queue.Queue()
+            position = [0]
+
+            def callback(outdata, frames, time_info, status):
+                start = position[0]
+                chunk = audio[start:start + frames]
+                outdata[:len(chunk)] = chunk
+                outdata[len(chunk):] = 0
+                position[0] = start + frames
+                if len(chunk) == frames:
+                    q.put(samples[start:start + frames])
+                else:
+                    q.put(None)  # end of file
+                    raise sd.CallbackStop
+
+            print("playing %s, ctrl-c to stop" % fname)
+            try:
+                with sd.OutputStream(samplerate=samplerate, channels=audio.shape[1], dtype='int16',
+                                     blocksize=data_size, callback=callback) as stream:
+                    while True:
+                        window = q.get()
+                        if window is None:
+                            break
+                        handle(window)
+                        windows += 1
+                    time.sleep(stream.latency)  # let the last block finish playing
+            except KeyboardInterrupt:
+                print()
+
+        print_summary(fft, windows)

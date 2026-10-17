@@ -11,6 +11,7 @@ running max per band, so no manual calibration is needed before a demo.
 """
 import argparse
 import sys
+import threading
 import time
 
 import serial
@@ -46,6 +47,17 @@ def process_block(fft_engine, block, samplerate, running_max):
 def send_frame(ser, levels):
     line = ",".join(str(v) for v in levels) + "\n"
     ser.write(line.encode("ascii"))
+
+
+def print_replies(ser, stop):
+    """Print every line the Arduino sends back until `stop` is set."""
+    while not stop.is_set():
+        try:
+            line = ser.readline()  # returns b"" after the port timeout
+        except serial.SerialException:
+            return
+        if line:
+            print("arduino:", line.decode("ascii", "replace").rstrip())
 
 
 def stream_file(path, ser, blocksize, running_max, play_audio):
@@ -108,10 +120,23 @@ def main():
                          help="Mic sample rate in Hz (default 44100). Ignored for --file.")
     parser.add_argument("--no-playback", action="store_true",
                          help="Don't play the file's audio out loud while streaming.")
+    parser.add_argument("--animation", type=int, choices=[1, 2, 3, 4],
+                         help="Pick the animation on firmware that supports it (the 'animations' program): "
+                              "1 = vu meter, 2 = shooting lights, 3 = beat ripples, "
+                              "4 = custom (animations_fastled only).")
+    parser.add_argument("--echo", action="store_true",
+                         help="Print the replies the Arduino sends back (for testing the firmware).")
     args = parser.parse_args()
 
     ser = serial.Serial(args.port, args.baud, timeout=1)
     time.sleep(2)  # let the Arduino finish its reset-on-connect before we send data
+
+    stop_replies = threading.Event()
+    if args.echo:
+        threading.Thread(target=print_replies, args=(ser, stop_replies), daemon=True).start()
+
+    if args.animation:
+        ser.write(f"{args.animation}\n".encode("ascii"))
 
     running_max = [GAIN_FLOOR] * BAND_COUNT
 
@@ -124,6 +149,9 @@ def main():
     except KeyboardInterrupt:
         print("\nStopped.")
     finally:
+        if args.echo:
+            time.sleep(0.3)  # let the replies to the last frames arrive
+        stop_replies.set()
         ser.close()
 
 
