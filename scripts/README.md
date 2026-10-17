@@ -1,9 +1,13 @@
 
+# Audio Analysis Scripts
 
+This directory contains two scripts, fft.py and audio_stream.py. Their purpose and use are described below.
 
 
 
 ## Running FFT.py
+
+This script contains the code to apply a Fast Fourior Transform function on audio data https://en.wikipedia.org/wiki/Fast_Fourier_transform. The simplest way to describe what a FFT does is that it takes a sample of audio data and caulculates the presence of constituent frequencies that make up the sound in the sample. If for example you played a triad (3 note) chord, it would show the frequencies of the 3 notes that make that chord. We use this to determine how much drums, bass, guitar etc. is in the music at a point in time. This can then be used to determine the beats or rhythm, which can make the LEDs animate in time with the music.
 
 This script can be run to use either an audio file (there are some in audio/ directory) or a microphone input.
 
@@ -23,6 +27,8 @@ python fft.py --mic true --debug true --datasize 2048
 
 ## Running audio_stream.py
 
+This script calls the code in the FFT script and sends the FFT results over serial for the Arduino to use.
+
 Streams the 7 frequency band levels (0-255) over serial to the Arduino, one line per audio block, e.g. `172,255,255,255,255,170,96`.
 
 First upload a firmware program from the `firmware/` folder, then find the Arduino's serial port. The programs are:
@@ -35,7 +41,7 @@ First upload a firmware program from the `firmware/` folder, then find the Ardui
 | `serial_test` | `pio run -d ../firmware -e serial_test -t upload` | Echoes each frame back so you can check the data arrives. |
 | `led_test` | `pio run -d ../firmware -e led_test -t upload` | Cycles colours, a chase and a rainbow on the LEDs. Doesn't use the audio. |
 
-To find the port, run `ls /dev/cu.*` before and after plugging it in; on macOS it looks like `/dev/cu.usbmodem1101` or `/dev/cu.usbserial-XXXX` (on Windows it is `COM5` or similar). Close any serial monitor first, or the port will be busy.
+To find the port, run `ls /dev/cu.*` before and after plugging it in; on macOS it looks like `/dev/cu.usbmodem1101` or `/dev/cu.usbserial-XXXX` (on Windows it is `COM5` or similar, but the command `mode` should list avaiable ports). Close any serial monitor first, or the port will be busy.
 
 ### To stream an audio file (it plays out loud while streaming):
 
