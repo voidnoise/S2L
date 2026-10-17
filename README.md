@@ -52,3 +52,8 @@ The agenda will be as follows:
 - Connecting and wiring an Arduino
 - Sending data over serial
 - Linking FFT data to drive LED animations on the Arduino
+
+
+## Credits
+
+This workshop has been prepared and delivery by Ben Winstone / [Octopus Immersive Laboratory](www.octopusimmersive.co.uk)
