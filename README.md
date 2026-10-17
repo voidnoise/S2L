@@ -27,5 +27,8 @@ setup.sh        macOS/Linux setup script
 ## Day-to-day use
 
 - Python scripts live in `scripts/` and run against the `.venv` interpreter.
+- To activate the python virtual environment 'venv'
+   - Mac : source .venv/bin/activate
+   - Windos: .venv/Scripts/activate
 - Firmware lives in `firmware/`; build/upload via the PlatformIO toolbar in VS Code or `pio run -t upload --project-dir firmware`.
 - Add new Python packages to `requirements.txt`, new firmware libraries to `firmware/platformio.ini` under `lib_deps`.

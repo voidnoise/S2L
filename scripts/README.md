@@ -30,6 +30,7 @@ First upload a firmware program from the `firmware/` folder, then find the Ardui
 | Program | Upload with | What it does |
 |---|---|---|
 | `animations` | `pio run -d ../firmware -e animations -t upload` | Three animations on 12 LEDs: VU meter, shooting lights and beat ripples. Pick one with `--animation 1`, `2` or `3`. See `firmware/animations/README.md`. |
+| `animations_fastled` | `pio run -d ../firmware -e animations_fastled -t upload` | The same three animations, written with the FastLED library. This is the easiest one to read. See `firmware/animations_fastled/README.md`. |
 | `simple_animation` | `pio run -d ../firmware -t upload` | Drives 12 WS2812 LEDs from the audio data, one zone per frequency band. This is the default. |
 | `serial_test` | `pio run -d ../firmware -e serial_test -t upload` | Echoes each frame back so you can check the data arrives. |
 | `led_test` | `pio run -d ../firmware -e led_test -t upload` | Cycles colours, a chase and a rainbow on the LEDs. Doesn't use the audio. |

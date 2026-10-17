@@ -120,9 +120,10 @@ def main():
                          help="Mic sample rate in Hz (default 44100). Ignored for --file.")
     parser.add_argument("--no-playback", action="store_true",
                          help="Don't play the file's audio out loud while streaming.")
-    parser.add_argument("--animation", type=int, choices=[1, 2, 3],
+    parser.add_argument("--animation", type=int, choices=[1, 2, 3, 4],
                          help="Pick the animation on firmware that supports it (the 'animations' program): "
-                              "1 = vu meter, 2 = shooting lights, 3 = beat ripples.")
+                              "1 = vu meter, 2 = shooting lights, 3 = beat ripples, "
+                              "4 = custom (animations_fastled only).")
     parser.add_argument("--echo", action="store_true",
                          help="Print the replies the Arduino sends back (for testing the firmware).")
     args = parser.parse_args()
