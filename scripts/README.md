@@ -15,11 +15,15 @@ In a terminal (vscode menu bar -> Terminal -> New Terminal) navigate to the scri
 
 ### To use an audio file:
 
+From the scripts directory call:
+
 ```
 python fft.py --file ../audio/melody7.wav --debug true --datasize 2048
 ```   
 
 ### To use a microphone:
+
+From the scripts directory call:
 
 ```
 python fft.py --mic true --debug true --datasize 2048
@@ -31,7 +35,7 @@ This script calls the code in the FFT script and sends the FFT results over seri
 
 Streams the 7 frequency band levels (0-255) over serial to the Arduino, one line per audio block, e.g. `172,255,255,255,255,170,96`.
 
-First upload a firmware program from the `firmware/` folder, then find the Arduino's serial port. The programs are:
+First upload a firmware program from the `firmware/` folder, then find the Arduino's serial port. The command line calls below are relative to the scripts directory. The programs are:
 
 | Program | Upload with | What it does |
 |---|---|---|
@@ -44,6 +48,8 @@ First upload a firmware program from the `firmware/` folder, then find the Ardui
 To find the port, run `ls /dev/cu.*` before and after plugging it in; on macOS it looks like `/dev/cu.usbmodem1101` or `/dev/cu.usbserial-XXXX` (on Windows it is `COM5` or similar, but the command `mode` should list avaiable ports). Close any serial monitor first, or the port will be busy.
 
 ### To stream an audio file (it plays out loud while streaming):
+
+From the scripts directory call:
 
 ```
 python audio_stream.py --file ../audio/melody7.wav --port /dev/cu.usbmodem1101

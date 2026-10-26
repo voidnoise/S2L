@@ -57,3 +57,8 @@ The agenda will be as follows:
 ## Credits
 
 This workshop has been prepared and delivery by Ben Winstone / [Octopus Immersive Laboratory](www.octopusimmersive.co.uk)
+
+
+<center><img src=
+"images/logo.png"
+width="250"></center>
